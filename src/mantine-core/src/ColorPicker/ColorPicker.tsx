@@ -12,6 +12,8 @@ import { Swatches, SwatchesStylesNames } from './Swatches/Swatches';
 import { ThumbStylesNames } from './Thumb/Thumb';
 import { HsvaColor } from './types';
 import useStyles from './ColorPicker.styles';
+import { ActionIcon } from '../ActionIcon';
+import { EyeDropperIcon } from './EyeDropperIcon';
 
 export type ColorPickerStylesNames =
   | Selectors<typeof useStyles>
@@ -32,6 +34,9 @@ export interface ColorPickerBaseProps {
 
   /** Color format */
   format?: 'hex' | 'rgba' | 'rgb' | 'hsl' | 'hsla';
+
+  /* If withAlpha and the browser supports the EyeDropper API, render an EyeDropper button */
+  withEyeDropper?: boolean;
 
   /** Set to false to display swatches only */
   withPicker?: boolean;
@@ -80,6 +85,7 @@ const SWATCH_SIZES = {
 const defaultProps: Partial<ColorPickerProps> = {
   swatchesPerRow: 10,
   size: 'sm',
+  withEyeDropper: true,
   withPicker: true,
   focusable: true,
   __staticSelector: 'ColorPicker',
@@ -95,6 +101,7 @@ export const ColorPicker = forwardRef<HTMLDivElement, ColorPickerProps>(
       swatches,
       swatchesPerRow,
       size,
+      withEyeDropper,
       withPicker,
       fullWidth,
       focusable,
@@ -155,6 +162,24 @@ export const ColorPicker = forwardRef<HTMLDivElement, ColorPickerProps>(
       setValue(convertHsvaTo(format, parsed));
     }, [format]);
 
+    const showEyeDropper = !!(window as any).EyeDropper && withEyeDropper && withAlpha;
+
+    const handleEyeDropperPick = () => {
+      if (showEyeDropper) {
+        new (window as any).EyeDropper()
+          .open()
+          .then((result) => {
+            setValue(result.sRGBHex);
+            console.log(result);
+          })
+          // The user aborted with Escape
+          .catch(() => {});
+      } else if (withEyeDropper && process.env.NODE_ENV === 'development') {
+        // eslint-disable-next-line no-console
+        console.error('Browser does not support eyedropper.');
+      }
+    };
+
     return (
       <Box className={cx(classes.wrapper, className)} ref={ref} {...others}>
         {withPicker && (
@@ -207,6 +232,17 @@ export const ColorPicker = forwardRef<HTMLDivElement, ColorPickerProps>(
                   size={theme.fn.size({ size, sizes: SWATCH_SIZES })}
                   className={classes.preview}
                 />
+              )}
+
+              {/* Check that the styling is good, commit (without use-eye-dropper) and then actually add use-eye-dropper. See if I can update types so that window.EyeDropper exists. */}
+              {showEyeDropper && (
+                <ActionIcon
+                  size={size}
+                  onClick={handleEyeDropperPick}
+                  className={classes.eyeDropper}
+                >
+                  <EyeDropperIcon />
+                </ActionIcon>
               )}
             </div>
           </>

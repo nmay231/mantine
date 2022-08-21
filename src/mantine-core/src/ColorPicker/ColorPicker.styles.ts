@@ -28,6 +28,11 @@ export default createStyles((theme, { size, fullWidth }: ColorPickerStylesParams
     paddingTop: theme.fn.size({ size, sizes: theme.spacing }) / 2,
   },
 
+  eyeDropper: {
+    marginLeft: theme.spacing.xs,
+    alignSelf: 'center',
+  },
+
   sliders: {
     flex: 1,
     boxSizing: 'border-box',
